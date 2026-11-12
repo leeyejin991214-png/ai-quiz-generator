@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI 족집게 선생님</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.min.css" />
+  <style>
+    body { font-family: 'Pretendard', sans-serif; }
+    /* 글래스모피즘 카드 스타일 */
+    .glass-card {
+      background: rgba(255, 255, 255, 0.6);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border: 1px solid rgba(255, 255, 255, 0.8);
+      box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.07);
+    }
+  </style>
+</head>
+<body class="bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50 min-h-screen text-gray-800 antialiased selection:bg-indigo-200">
+  
+  <main class="max-w-5xl mx-auto px-4 py-12">
+    <!-- 헤더 영역 -->
+    <header class="text-center mb-10">
+      <h1 class="text-4xl font-extrabold tracking-tight text-gray-900 mb-3">📝 AI 족집게 선생님</h1>
+      <p class="text-lg text-gray-600 font-medium">PDF를 올리면 핵심 퀴즈와 토론 질문을 뚝딱 만들어 드립니다!</p>
+    </header>
+
+    <!-- 에러 표시 영역 -->
+    <div id="errorBox" class="hidden mb-6 p-4 rounded-xl bg-red-50/80 backdrop-blur-md border border-red-200 text-red-600 font-semibold text-center shadow-sm"></div>
+
+    <!-- 파일 업로드 카드 (글래스모피즘) -->
+    <section class="glass-card rounded-3xl p-8 mb-10 transition-all hover:shadow-xl relative overflow-hidden group">
+      <!-- 배경 장식용 흐릿한 원 -->
+      <div class="absolute -top-10 -right-10 w-40 h-40 bg-indigo-200 rounded-full mix-blend-multiply filter blur-2xl opacity-50"></div>
+      
+      <div id="dropZone" class="relative border-2 border-dashed border-indigo-300 rounded-2xl p-10 text-center bg-white/40 hover:bg-white/60 transition cursor-pointer flex flex-col items-center justify-center">
+        <input type="file" id="fileInput" accept="application/pdf" class="hidden" />
+        <div class="text-5xl mb-4">📄</div>
+        <p class="text-xl font-bold text-gray-700 mb-2">여기를 클릭하거나 PDF 파일을 드래그하여 업로드하세요</p>
+        <p class="text-sm text-gray-500 font-medium">지원 형식: .pdf (최대 4MB)</p>
+        <p id="fileNameDisplay" class="mt-4 text-indigo-600 font-bold hidden flex items-center gap-2"><span class="w-2 h-2 rounded-full bg-green-500"></span> <span>파일명</span></p>
+      </div>
+
+      <div class="mt-8 text-center">
+        <!-- 소프트 그라디언트 CTA 버튼 -->
+        <button id="analyzeBtn" disabled class="w-full sm:w-auto px-10 py-4 rounded-2xl text-lg font-bold text-white shadow-lg shadow-indigo-200 bg-gradient-to-r from-blue-400 via-indigo-400 to-purple-400 hover:from-blue-500 hover:via-indigo-500 hover:to-purple-500 disabled:opacity-50 disabled:cursor-not-allowed transform hover:-translate-y-0.5 transition-all">
+          ✨ PDF 분석 & 퀴즈 생성하기
+        </button>
+      </div>
+      
+      <!-- 로딩 표시 -->
+      <div id="loadingIndicator" class="hidden mt-6 flex flex-col items-center justify-center space-y-3">
+        <div class="w-8 h-8 border-4 border-indigo-200 border-t-indigo-600 rounded-full animate-spin"></div>
+        <p class="text-indigo-600 font-bold animate-pulse">문서를 꼼꼼히 읽고 질문을 출제 중입니다...</p>
+      </div>
+    </section>
+
+    <!-- 결과 영역 (Bento Grid 레이아웃) -->
+    <section id="resultSection" class="hidden">
+      <div class="flex justify-between items-end mb-6">
+        <h2 class="text-2xl font-extrabold text-gray-800">🎯 분석 결과</h2>
+        <button id="copyBtn" class="text-sm font-bold bg-white/60 hover:bg-white border border-gray-200 px-4 py-2 rounded-xl shadow-sm transition">📋 전체 복사하기</button>
+      </div>
+
+      <!-- 벤토 그리드 적용 (3칸 레이아웃) -->
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        
+        <!-- 카드 1: 퀴즈 (크게 차지) -->
+        <div class="glass-card rounded-3xl p-6 md:col-span-2">
+          <div class="flex items-center gap-3 mb-5 border-b border-indigo-100 pb-3">
+            <span class="bg-indigo-100 text-indigo-600 px-3 py-1 rounded-full text-sm font-bold">CARD 01</span>
+            <h3 class="text-xl font-bold text-gray-800">실전 객관식 퀴즈 5선</h3>
+          </div>
+          <div id="quizContainer" class="space-y-4 text-gray-700 leading-relaxed font-medium whitespace-pre-line"></div>
+        </div>
+
+        <!-- 카드 2: 토론 질문 (우측 세로) -->
+        <div class="glass-card rounded-3xl p-6 md:col-span-1">
+          <div class="flex items-center gap-3 mb-5 border-b border-purple-100 pb-3">
+             <span class="bg-purple-100 text-purple-600 px-3 py-1 rounded-full text-sm font-bold">CARD 02</span>
+             <h3 class="text-xl font-bold text-gray-800">생각 넓히기 토론</h3>
+          </div>
+          <div id="discussionContainer" class="space-y-4 text-gray-700 leading-relaxed font-medium whitespace-pre-line"></div>
+        </div>
+        
+        <!-- 카드 3: 정답 및 해설 (가로 전체 차지) -->
+        <div class="glass-card rounded-3xl p-6 md:col-span-3">
+            <div class="flex items-center gap-3 mb-5 border-b border-pink-100 pb-3">
+             <span class="bg-pink-100 text-pink-600 px-3 py-1 rounded-full text-sm font-bold">CARD 03</span>
+             <h3 class="text-xl font-bold text-gray-800">정답 및 해설</h3>
+          </div>
+          <div id="answerContainer" class="space-y-4 text-gray-700 leading-relaxed font-medium whitespace-pre-line"></div>
+        </div>
+      </div>
+    </section>
+  </main>
+  <script src="app.js"></script>
+</body>
+</html>

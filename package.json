@@ -1,0 +1,9 @@
+{
+  "name": "ai-quiz-generator",
+  "version": "1.0.0",
+  "description": "AI 족집게 선생님 - PDF 기반 퀴즈 생성기",
+  "private": true,
+  "engines": {
+    "node": ">=20"
+  }
+}
